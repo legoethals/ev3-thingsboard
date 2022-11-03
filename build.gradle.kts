@@ -14,5 +14,7 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.fusesource.mqtt-client:mqtt-client:1.12")
+    implementation("com.hivemq:hivemq-mqtt-client-reactor:1.3.0")
     implementation("io.projectreactor:reactor-core:3.4.14")
 }
