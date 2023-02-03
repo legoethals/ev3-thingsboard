@@ -1,45 +1,39 @@
 package com.legoethals.ev3.thingsboard
 
-import com.hivemq.client.mqtt.MqttClient
-import com.hivemq.client.mqtt.mqtt3.reactor.Mqtt3ReactorClient
-import com.hivemq.client.mqtt.mqtt5.reactor.Mqtt5ReactorClient
+import lejos.hardware.BrickFinder
+import lejos.hardware.Sound
+import lejos.hardware.ev3.EV3
+import lejos.hardware.ev3.LocalEV3.ev3
+import lejos.hardware.motor.EV3MediumRegulatedMotor
+import lejos.hardware.port.Port
+import lejos.internal.ev3.EV3LED
 import org.fusesource.mqtt.client.Future
 import org.fusesource.mqtt.client.MQTT
 import org.fusesource.mqtt.client.QoS
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import java.time.Duration
 
 
 fun main() {
-    //Check https://hivemq.github.io/hivemq-mqtt-client/
-//    Sound.beep()
+
+    val eV3 = BrickFinder.getLocal() as EV3
+    Sound.playTone(220, 200, 10)
+    val ev3Led = eV3.led as EV3LED
+    ev3Led.setPattern(EV3LED.PATTERN_HEARTBEAT * 2 + EV3LED.COLOR_RED)
+    println("Starting motor...")
+    val motor = EV3MediumRegulatedMotor(ev3.getPort("B"))
+    motor.setSpeed(motor.maxSpeed)
+    motor.forward()
+
+    //https://hivemq.github.io/hivemq-mqtt-client/
     val topic = "v1/devices/me/telemetry"
     val host = "localhost"
     val port = 1883
     //mosquitto_pub -d -q 1 -h "localhost" -p "1883" -t "" -u "" -m {"temperature":6}
 
-    val client = MqttClient.builder()
-        .useMqttVersion5()
-        .identifier("ev3-1")
-        .serverHost("localhost")
-        .serverPort(1883)
-
-//        .sslWithDefaultConfig()
-        .buildRx()
-    val reactorClient = Mqtt5ReactorClient.from(client)
-    val brol = reactorClient.connectWith()
-        .simpleAuth()
-        .username("ev3-1")
-        .password("ev3-1".toByteArray())
-        .applySimpleAuth()
-        .applyConnect()
-        .block()
-
-
-
-
-
-
+    println("Setting up mqtt connection")
     val mqtt = MQTT()
     mqtt.setHost(host, port)
     mqtt.setUserName("ev3-1")
@@ -47,13 +41,18 @@ fun main() {
     mqtt.setClientId("ev3-1")
     val connection = mqtt.futureConnection()
     val f1: Future<Void> = connection.connect()
+    println("Await to connect...")
     f1.await()
-    Flux.interval(Duration.ofSeconds(1)).doOnNext {
-        val message = """{"temperature": $it}"""
-        val f3 = connection.publish(topic, message.toByteArray(), QoS.AT_LEAST_ONCE, false)
-        f3.await()
-    }.take(20).blockLast()
 
-    val f4 = connection.disconnect()
-    f4.await()
+    Flux.interval(Duration.ofSeconds(1)).flatMap {
+        Mono.fromCallable {
+            val message = """{"light": $it}"""
+            val f3 = connection.publish(topic, message.toByteArray(), QoS.AT_LEAST_ONCE, false)
+            f3.await()
+        }.subscribeOn(Schedulers.boundedElastic())
+    }.take(5).blockLast()
+
+    motor.stop()
+
+    connection.disconnect().await()
 }

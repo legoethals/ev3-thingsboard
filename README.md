@@ -7,6 +7,10 @@ Default credentials:
     Customer User: customer@thingsboard.org / customer
 
 EV3 device Access token:
-ZL8PFbKV3lKXKUlFx6qN
+43nIbGhOQlT7MPZejRO8
 
-mosquitto_pub -d -q 1 -h "localhost" -p "1883" -t "v1/devices/me/telemetry" -u "ZL8PFbKV3lKXKUlFx6qN" -m {"temperature":25}
+mosquitto_pub -d -q 1 -h "localhost" -p "1883" -t "v1/devices/me/telemetry" -u "43nIbGhOQlT7MPZejRO8" -m {"light":25}
+
+Mqtt Port forwarding
+`ssh -R 10.0.1.1:1883:localhost:1883 root@ev2_usb`
+``````

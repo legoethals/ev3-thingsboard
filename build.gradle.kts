@@ -5,7 +5,7 @@ plugins {
 }
 
 ev3 {
-    mainClass.set("com.legoethals.ev3.thingsboard.AppKt")
+    mainClass.set("com.legoethals.ev3.thingsboard.BeepSequenceKt")
 }
 
 repositories {
