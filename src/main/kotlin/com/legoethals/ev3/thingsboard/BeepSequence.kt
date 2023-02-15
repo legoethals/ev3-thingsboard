@@ -5,9 +5,13 @@ import lejos.hardware.Sound
 import lejos.hardware.ev3.LocalEV3
 import lejos.hardware.lcd.LCD
 import lejos.hardware.motor.EV3MediumRegulatedMotor
+import lejos.internal.ev3.EV3LED
 
 fun main() {
     Sound.beepSequenceUp()
+
+    val ev3Led = LocalEV3.ev3.led as EV3LED
+    ev3Led.setPattern(EV3LED.PATTERN_HEARTBEAT * 3 + EV3LED.COLOR_GREEN)
 
     val motor = EV3MediumRegulatedMotor(LocalEV3.ev3.getPort("B"))
     motor.setSpeed(motor.maxSpeed)
